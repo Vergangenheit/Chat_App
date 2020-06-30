@@ -23,30 +23,37 @@ SERVER.bind(ADDR)  # set up server
 def broadcast(msg, name):
     for person in persons:
         client = person.client
-        client.send(bytes(name + ": ", "utf8") + msg)
+        client.send(bytes(name, "utf8") + msg)
 
 
 def client_communication(person):
     client = person.client
-    name = person.name
-    addr = person.addr
 
     # get person name
     name = client.recv(BUFSIZ).decode("utf8")
-    msg = f"{name} has joined the chat!"
-    broadcast(msg)
+    person.set_name(name)
+    msg = bytes(f"{name} has joined the chat!", "utf8")
+    broadcast(msg, "")
+    run = True
     while True:
-        msg = client.recv(BUFSIZ)
-        # if we receive a message we have to broadcast it to all of our clients
-        if msg == bytes("{quit}", "utf8"):
-            broadcast(f"{name} has left the chat...", "")
-            client.send(bytes("{quit}", "utf8"))
-            client.close()
-            persons.remove(person)
-        else:
-            client.send(msg, name)
+        try:
+            msg = client.recv(BUFSIZ)
+            print(f"{name}: ", msg.decode("utf8"))
+            # if we receive a message we have to broadcast it to all of our clients
+            if msg == bytes("{quit}", "utf8"):
+                client.send(bytes("{quit}", "utf8"))
+                client.close()
+                persons.remove(person)
+                broadcast(f"{name} has left the chat...", "")
+                print(f"[DISCONNECTED] {name} disconnected")
+                break
+            else:
+                broadcast(msg, name+": ")
+                print(f"{name}: ", msg.decode("utf8"))
 
-    # if we receive a message we have to broadcast it to all of our clients
+        except Exception as e:
+            print("[EXCEPTION]", e)
+            break
 
 
 def wait_for_connection(SERVER):
@@ -70,7 +77,7 @@ def wait_for_connection(SERVER):
 
 if __name__ == "__main__":
     SERVER.listen(5)  # Listens for 5 connections at max.
-    print("Waiting for connection...")
+    print("[STARTED] Waiting for connection...")
     ACCEPT_THREAD = Thread(target=wait_for_connection, args=(SERVER,))
     ACCEPT_THREAD.start()  # Starts the infinite loop.
     ACCEPT_THREAD.join()

@@ -1,14 +1,11 @@
 class Person:
-    def __init__(self, addr, name, client):
+    def __init__(self, addr, client):
         self.addr = addr
-        self.name = None
         self.client = client
+        self.name = None
 
     def set_name(self, name):
         self.name = name
 
     def __repr__(self):
-        return f"Person{self.addr}, {self.name}"
-
-    def __str__(self):
-        pass
+        return f"Person({self.addr}, {self.name})"
