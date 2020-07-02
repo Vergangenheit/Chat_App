@@ -29,6 +29,7 @@ class Client:
         while True:
             try:
                 msg = self.client_socket.recv(self.BUFSIZ).decode()
+                # make sure memory is safe to access
                 self.lock.acquire()
                 self.messages.append(msg)
                 self.lock.release()
@@ -47,9 +48,13 @@ class Client:
         returns a list of str messages
         :return: list[str]
         """
+        messages_copy = self.messages[:]
+        # make sure memory is safe to access
         self.lock.acquire()
+        self.messages = []
         self.lock.release()
-        return self.messages
+
+        return messages_copy
 
     def disconnect(self):
-        self.send_message(bytes("{quit}", "utf8"))
+        self.send_message("{quit}")
